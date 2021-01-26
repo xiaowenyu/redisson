@@ -36,11 +36,13 @@ public class MasterConnectionPool extends ConnectionPool<RedisConnection> {
         super(config, connectionManager, masterSlaveEntry);
     }
 
+    // 请求连接
     @Override
     public RFuture<RedisConnection> get(RedisCommand<?> command) {
         return acquireConnection(command, entries.get(0));
     }
-    
+
+    // 移除节点
     public void remove(ClientConnectionsEntry entry) {
         entries.remove(entry);
     }

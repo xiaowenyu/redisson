@@ -135,6 +135,7 @@ public class ClientConnectionsEntry {
     }
 
     public void reset() {
+        // 清空所有连接的回调
         freeConnectionsCounter.removeListeners();
         freeSubscribeConnectionsCounter.removeListeners();
     }
@@ -144,6 +145,7 @@ public class ClientConnectionsEntry {
     }
 
     public void acquireConnection(Runnable runnable) {
+        // 请求连接
         freeConnectionsCounter.acquire(runnable);
     }
     

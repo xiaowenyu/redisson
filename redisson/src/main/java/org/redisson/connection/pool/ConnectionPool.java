@@ -183,7 +183,9 @@ abstract class ConnectionPool<T extends RedisConnection> {
 
     protected abstract int getMinimumIdleSize(ClientConnectionsEntry entry);
 
+    // 从连接池中获取连接
     public RFuture<T> get(RedisCommand<?> command) {
+        // 复制节点
         List<ClientConnectionsEntry> entriesCopy = new LinkedList<ClientConnectionsEntry>(entries);
         for (Iterator<ClientConnectionsEntry> iterator = entriesCopy.iterator(); iterator.hasNext();) {
             ClientConnectionsEntry entry = iterator.next();
@@ -207,6 +209,7 @@ abstract class ConnectionPool<T extends RedisConnection> {
             }
         }
 
+        // 获取失败会报错
         StringBuilder errorMsg = new StringBuilder(getClass().getSimpleName() + " no available Redis entries. Master entry host: " + masterSlaveEntry.getClient().getAddr());
         if (!freezed.isEmpty()) {
             errorMsg.append(" Disconnected hosts: ").append(freezed);
@@ -249,6 +252,7 @@ abstract class ConnectionPool<T extends RedisConnection> {
             };
             
             result.onComplete(callback);
+            // 请求连接
             acquireConnection(entry, callback);
         
             return result;

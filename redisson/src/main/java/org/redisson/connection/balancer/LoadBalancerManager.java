@@ -65,6 +65,7 @@ public class LoadBalancerManager {
         pubSubConnectionPool = new PubSubConnectionPool(config, connectionManager, entry);
     }
 
+    // 改变节点角色
     public void changeType(InetSocketAddress address, NodeType nodeType) {
         ClientConnectionsEntry entry = getEntry(address);
         if (entry != null) {

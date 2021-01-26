@@ -198,7 +198,8 @@ public class MasterSlaveEntry {
 
     public boolean nodeDown(ClientConnectionsEntry entry) {
         entry.reset();
-        
+
+        // 关闭所有连接
         for (RedisConnection connection : entry.getAllConnections()) {
             connection.closeAsync();
             reattachBlockingQueue(connection.getCurrentCommand());
@@ -209,8 +210,10 @@ public class MasterSlaveEntry {
                 break;
             }
         }
+        // 清空所有连接
         entry.getAllConnections().clear();
 
+        // 关闭订阅连接
         for (RedisPubSubConnection connection : entry.getAllSubscribeConnections()) {
             connection.closeAsync();
             connectionManager.getSubscribeService().reattachPubSub(connection);
@@ -438,6 +441,7 @@ public class MasterSlaveEntry {
             RFuture<RedisClient> future) {
         future.onComplete((newMasterClient, e) -> {
             if (e != null) {
+                // 有问题移除节点
                 if (oldMaster != masterEntry) {
                     writeConnectionPool.remove(masterEntry);
                     pubSubConnectionPool.remove(masterEntry);
@@ -447,25 +451,32 @@ public class MasterSlaveEntry {
                 log.error("Unable to change master from: " + oldMaster.getClient().getAddr() + " to: " + address, e);
                 return;
             }
-            
+
+            // 直接移除
             writeConnectionPool.remove(oldMaster);
             pubSubConnectionPool.remove(oldMaster);
 
             synchronized (oldMaster) {
+                // 设置旧节点冻结原因
                 oldMaster.setFreezeReason(FreezeReason.MANAGER);
             }
+            // 旧的主节点下线
             nodeDown(oldMaster);
 
+            // 改变节点角色
             slaveBalancer.changeType(oldMaster.getClient().getAddr(), NodeType.SLAVE);
             slaveBalancer.changeType(newMasterClient.getAddr(), NodeType.MASTER);
             // freeze in slaveBalancer
+            // 当成从节点负载中找到节点后，下线
             slaveDown(oldMaster.getClient().getAddr(), FreezeReason.MANAGER);
 
             // more than one slave available, so master can be removed from slaves
+            // 如果从节点数量大于 1， 主节点可以直接在从节点中删除
             if (!config.checkSkipSlavesInit()
                     && slaveBalancer.getAvailableClients() > 1) {
                 slaveDown(newMasterClient.getAddr(), FreezeReason.SYSTEM);
             }
+            // 异步关闭客户端
             oldMaster.getClient().shutdownAsync();
             log.info("master {} has changed to {}", oldMaster.getClient().getAddr(), masterEntry.getClient().getAddr());
         });

@@ -351,6 +351,7 @@ public class ClusterConnectionManager extends MasterSlaveConnectionManager {
     }
 
     private void scheduleClusterChangeCheck(ClusterServersConfig cfg) {
+        // 定时监控集群变化
         monitorFuture = group.schedule(new Runnable() {
             @Override
             public void run() {
@@ -408,6 +409,7 @@ public class ClusterConnectionManager extends MasterSlaveConnectionManager {
         }, cfg.getScanInterval(), TimeUnit.MILLISECONDS);
     }
 
+    // 检查集群状态
     private void checkClusterState(ClusterServersConfig cfg, Iterator<RedisURI> iterator, AtomicReference<Throwable> lastException) {
         if (!iterator.hasNext()) {
             if (lastException.get() != null) {
@@ -429,6 +431,7 @@ public class ClusterConnectionManager extends MasterSlaveConnectionManager {
                 return;
             }
 
+            // 更新集群状态
             updateClusterState(cfg, connection, iterator, uri, lastException);
         });
     }

@@ -62,7 +62,9 @@ public class AsyncSemaphore {
     }
     
     public void acquire(Runnable listener) {
+        // 添加任务
         listeners.add(listener);
+        //执行
         tryRun();
     }
 
